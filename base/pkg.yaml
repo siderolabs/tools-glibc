@@ -1,0 +1,6 @@
+name: base
+dependencies:
+  - image: "{{ .TOOLCHAIN_IMAGE }}"
+    runtime: true
+  - stage: make
+    runtime: true

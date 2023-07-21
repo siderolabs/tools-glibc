@@ -1,0 +1,36 @@
+name: util-linux
+dependencies:
+  - stage: base
+steps:
+  - sources:
+      - url: https://www.kernel.org/pub/linux/utils/util-linux/v{{ regexReplaceAll ".\\d+$" .util_linux_version "${1}" }}/util-linux-{{  regexReplaceAll "\\.0$" .util_linux_version "${1}" }}.tar.xz
+        destination: util-linux.tar.xz
+        sha256: "{{ .util_linux_sha256 }}"
+        sha512: "{{ .util_linux_sha512 }}"
+    prepare:
+      - |
+        tar -xJf util-linux.tar.xz --strip-components=1
+        mkdir build
+        cd build
+        ../configure \
+            --prefix=${TOOLCHAIN} \
+            --without-python \
+            --disable-bash-completion \
+            --disable-asciidoc \
+            --disable-makeinstall-chown \
+            --without-systemd \
+            --without-systemdsystemunitdir \
+            --without-ncurses \
+            PKG_CONFIG=""
+    build:
+      - |
+        cd build
+        make -j $(nproc)
+    install:
+      - |
+        cd build
+        mkdir /rootfs
+        make install DESTDIR=/rootfs
+finalize:
+  - from: /rootfs
+    to: /

@@ -1,0 +1,28 @@
+
+name: rpcsvc-proto
+dependencies:
+  - stage: base
+steps:
+  - sources:
+      - url: https://github.com/thkukuk/rpcsvc-proto/releases/download/v{{ .rpcsvc_proto_version }}/rpcsvc-proto-{{ .rpcsvc_proto_version }}.tar.xz
+        destination: rpcsvc-proto.tar.xz
+        sha256: "{{ .rpcsvc_proto_sha256 }}"
+        sha512: "{{ .rpcsvc_proto_sha512 }}"
+    prepare:
+      - |
+        tar -xf rpcsvc-proto.tar.xz --strip-components=1
+
+        ./configure \
+          --prefix=${TOOLCHAIN}
+    build:
+      - |
+        make -j $(nproc)
+    install:
+      - |
+        mkdir -p /rootfs
+
+        make install DESTDIR=/rootfs
+        rm -rf /rootfs/toolchain/share
+finalize:
+  - from: /rootfs
+    to: /

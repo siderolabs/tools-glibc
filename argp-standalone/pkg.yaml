@@ -1,0 +1,34 @@
+name: argp-standalone
+dependencies:
+  - stage: base
+  - stage: patch
+  - stage: autoconf
+  - stage: automake
+steps:
+  - sources:
+      # https://git.alpinelinux.org/aports/tree/main/argp-standalone/APKBUILD
+      - url: https://github.com/argp-standalone/argp-standalone/archive/refs/tags/{{ .argp_standalone_version }}.tar.gz
+        destination: argp-standalone.tar.gz
+        sha256: "{{ .argp_standalone_sha256 }}"
+        sha512: "{{ .argp_standalone_sha512 }}"
+    prepare:
+      - |
+        tar -xzvf argp-standalone.tar.gz --strip-components=1
+
+        autoreconf -vif
+        ./configure \
+            --prefix=${TOOLCHAIN} \
+            --disable-static \
+            CFLAGS="${CFLAGS} -fPIC"
+    build:
+      - |
+        make -j $(nproc)
+    install:
+      - |
+        mkdir -p /rootfs${TOOLCHAIN}/lib
+        mkdir -p /rootfs${TOOLCHAIN}/include
+        cp -v libargp.a /rootfs${TOOLCHAIN}/lib
+        cp -v argp.h /rootfs${TOOLCHAIN}/include
+finalize:
+  - from: /rootfs
+    to: /

@@ -1,0 +1,50 @@
+name: openssl
+dependencies:
+  - stage: base
+  - stage: perl
+steps:
+  - sources:
+      - url: https://www.openssl.org/source/openssl-{{.openssl_version | replace "_" "." }}.tar.gz
+        destination: openssl.tar.gz
+        sha256: "{{ .openssl_sha256 }}"
+        sha512: "{{ .openssl_sha512 }}"
+    env:
+      SOURCE_DATE_EPOCH: {{ .BUILD_ARG_SOURCE_DATE_EPOCH }}
+    prepare:
+      - |
+        mkdir openssl
+        tar -xzf openssl.tar.gz --strip-components=1 -C openssl
+
+        cd openssl
+
+        perl ./Configure \
+          linux-${ARCH} \
+          --prefix=${TOOLCHAIN} \
+          --libdir=lib \
+          --openssldir=/etc/ssl1.1 \
+          shared \
+          no-zlib \
+          no-async \
+          no-comp \
+          no-idea \
+          no-mdc2 \
+          no-rc5 \
+          no-ec2m \
+          no-sm2 \
+          no-sm4 \
+          no-ssl2 \
+          no-ssl3 \
+          no-seed \
+          no-weak-ssl-ciphers
+
+    build:
+      - |
+        cd openssl
+        make -j $(nproc)
+    install:
+      - |
+        cd openssl
+        make DESTDIR=/rootfs install_sw
+finalize:
+  - from: /rootfs
+    to: /

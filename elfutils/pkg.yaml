@@ -1,0 +1,38 @@
+name: elfutils
+dependencies:
+  - stage: base
+  - stage: zlib
+  - stage: argp-standalone
+  - stage: patch
+  - stage: autoconf
+  - stage: automake
+steps:
+  - sources:
+      - url: https://sourceware.org/elfutils/ftp/{{ .elfutils_version }}/elfutils-{{ .elfutils_version }}.tar.bz2
+        destination: elfutils.tar.bz2
+        sha256: "{{ .elfutils_sha256 }}"
+        sha512: "{{ .elfutils_sha512 }}"
+    prepare:
+      - |
+        tar -xjf elfutils.tar.bz2 --strip-components=1
+
+        mkdir build
+        cd build
+
+        ../configure \
+            --prefix=${TOOLCHAIN} \
+            --disable-libdebuginfod \
+            --disable-debuginfod \
+            CFLAGS="${CFLAGS} -fPIC -Wno-error"
+    build:
+      - |
+        cd build
+
+        make
+    install:
+      - |
+        cd build
+        make DESTDIR=/rootfs install
+finalize:
+  - from: /rootfs
+    to: /
