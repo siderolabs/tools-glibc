@@ -1,0 +1,28 @@
+name: m4
+dependencies:
+  - stage: base
+steps:
+  - sources:
+      - url: https://ftp.gnu.org/gnu/m4/m4-{{ .m4_version }}.tar.xz
+        destination: m4.tar.xz
+        sha256: "{{ .m4_sha256 }}"
+        sha512: "{{ .m4_sha512 }}"
+    prepare:
+      - |
+        tar -xJf m4.tar.xz --strip-components=1
+        mkdir build
+        cd build
+
+        ../configure \
+            --prefix=${TOOLCHAIN} \
+    build:
+      - |
+        cd build
+        make -j $(nproc)
+    install:
+      - |
+        cd build
+        make DESTDIR=/rootfs install
+finalize:
+  - from: /rootfs
+    to: /

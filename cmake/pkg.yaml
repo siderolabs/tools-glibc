@@ -1,0 +1,43 @@
+name: cmake
+dependencies:
+  - stage: base
+  - stage: bzip2
+  - stage: curl
+  - stage: expat
+  - stage: libuv
+  - stage: ncurses
+  - stage: rhash
+  - stage: xz
+  - stage: zlib
+steps:
+  - sources:
+      - url: https://www.cmake.org/files/v{{ regexReplaceAll ".\\d+$" .cmake_version "${1}" }}/cmake-{{ .cmake_version }}.tar.gz
+        destination: cmake.tar.gz
+        sha256: "{{ .cmake_sha256 }}"
+        sha512: "{{ .cmake_sha512 }}"
+    env:
+      CC: gcc
+      CXX: g++
+      LD_LIBRARY_PATH: /toolchain/lib
+    prepare:
+      - |
+        tar -xzf cmake.tar.gz --strip-components=1
+
+        ./bootstrap \
+            --prefix=${TOOLCHAIN} \
+            --system-libs \
+            --no-system-jsoncpp \
+            --no-system-libarchive \
+            --parallel=$(nproc) \
+            -- -DCMAKE_BUILD_TYPE:STRING=Release \
+               -DCMAKE_INSTALL_RPATH=/toolchain/lib
+    build:
+      - |
+        make -j $(nproc)
+    install:
+      - |
+        make DESTDIR=/rootfs install
+finalize:
+  - from: /rootfs
+    to: /
+# || (cat Bootstrap.cmk/cmake_bootstrap.log; exit 1)

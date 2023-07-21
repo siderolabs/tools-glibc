@@ -1,0 +1,55 @@
+name: python3
+dependencies:
+  - stage: base
+  - stage: zlib
+  - stage: patch
+  - stage: libffi
+  - stage: openssl
+  - stage: pkg-config
+steps:
+  - sources:
+      - url: https://www.python.org/ftp/python/{{ .python_version }}/Python-{{ .python_version }}.tar.xz
+        destination: python.tar.xz
+        sha256: "{{ .python_sha256 }}"
+        sha512: "{{ .python_sha512 }}"
+    env:
+      SOURCE_DATE_EPOCH: {{ .BUILD_ARG_SOURCE_DATE_EPOCH }}
+      LD_LIBRARY_PATH: "/toolchain/lib"
+    prepare:
+      - |
+        tar -xJf python.tar.xz --strip-components=1
+
+        mkdir build
+        cd build
+
+        sed -i '/def add_multiarch_paths/a \        return' ../setup.py
+
+        ../configure \
+            --prefix=${TOOLCHAIN} \
+            --with-ensurepip=install
+    build:
+      - |
+        cd build
+        make -j $(nproc)
+    install:
+      - |
+        cd build
+        make DESTDIR=/rootfs install
+
+        # needed for some packages, especially packages that backport functionality
+        # to 2.x from 3.x
+        for item in /rootfs${TOOLCHAIN}/lib/python3.10/test/*; do
+          if [[ "$item" != */test_support.py* ]]; then
+            rm -rf "$item"
+          else
+            echo $item
+          fi
+        done
+
+        touch /rootfs${TOOLCHAIN}/lib/python3.11/test/__init__.py
+
+        # Determinism: remove all bytecode
+        find /rootfs -type d -name __pycache__ -print0 | xargs -0 -I {} rm -rf "{}"
+finalize:
+  - from: /rootfs
+    to: /

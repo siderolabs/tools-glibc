@@ -1,0 +1,41 @@
+name: curl
+dependencies:
+  - stage: base
+  - stage: openssl
+    runtime: true
+  - stage: zlib
+    runtime: true
+  - stage: pkg-config
+steps:
+  - sources:
+      - url: https://curl.haxx.se/download/curl-{{ .curl_version | replace "_" "." }}.tar.xz
+        destination: curl.tar.xz
+        sha256: "{{ .curl_sha256 }}"
+        sha512: "{{ .curl_sha512 }}"
+    prepare:
+      - |
+        tar -xJf curl.tar.xz --strip-components=1
+        mkdir build
+        cd build
+
+        # This is required to avoid "One or more libs available at link-time are not available at run-time".
+        export PKG_CONFIG_PATH=${TOOLCHAIN}/lib/pkgconfig
+
+        ../configure \
+            --prefix=${TOOLCHAIN} \
+            --disable-static \
+            --enable-threaded-resolver \
+            --with-ca-bundle=${TOOLCHAIN}/etc/ssl/certs/ca-certificates \
+            --with-zlib \
+            --with-ssl
+    build:
+      - |
+        cd build
+        make -j $(nproc)
+    install:
+      - |
+        cd build
+        make DESTDIR=/rootfs install
+finalize:
+  - from: /rootfs
+    to: /

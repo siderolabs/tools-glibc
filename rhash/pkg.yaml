@@ -1,0 +1,30 @@
+name: rhash
+dependencies:
+  - stage: base
+  - stage: openssl
+  - stage: patch
+steps:
+  - sources:
+      - url: https://github.com/rhash/RHash/archive/refs/tags/{{ .rhash_version }}.tar.gz
+        destination: rhash.tar.gz
+        sha256: "{{ .rhash_sha256 }}"
+        sha512: "{{ .rhash_sha512 }}"
+    prepare:
+      - |
+        tar -xzf rhash.tar.gz --strip-components=1
+
+        ./configure \
+        --prefix="${TOOLCHAIN}" \
+        --enable-openssl \
+        --disable-openssl-runtime
+
+    build:
+      - |
+        make -j $(nproc)
+    install:
+      - |
+        make DESTDIR=/rootfs install
+        make DESTDIR=/rootfs install-lib-headers install-lib-shared install-lib-so-link
+finalize:
+  - from: /rootfs
+    to: /

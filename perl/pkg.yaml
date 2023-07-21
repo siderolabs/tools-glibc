@@ -1,0 +1,48 @@
+name: perl
+dependencies:
+  - stage: base
+  - stage: patch
+steps:
+  - sources:
+    - url: https://www.cpan.org/src/5.0/perl-{{ .perl_version }}.tar.xz
+      destination: perl.tar.xz
+      sha256: "{{ .perl_sha256 }}"
+      sha512: "{{ .perl_sha512 }}"
+    env:
+      SOURCE_DATE_EPOCH: {{ .BUILD_ARG_SOURCE_DATE_EPOCH }}
+    prepare:
+      - |
+        tar -xJf perl.tar.xz --strip-components=1
+
+        patch -p1 < /pkg/patches/reproducible-build-date.patch
+
+        # This is hardcoded in ./ext/Errno/Errno_pm.P.
+        # Copy it from our toolchain to where it is expected.
+        mkdir -p /usr/include
+        # cp ${TOOLCHAIN}/include/errno.h /usr/include/
+
+        /toolchain/bin/nm --help
+
+        ./Configure -des \
+          -Dcccdlflags='-fPIC' \
+          -Dcccdlflags='-fPIC' \
+          -Dccdlflags='-rdynamic' \
+          -Dprefix=${TOOLCHAIN} \
+          -Dvendorprefix=${TOOLCHAIN} \
+          -Duselargefiles \
+          -Dusethreads \
+          -Duseshrplib \
+          -Dd_semctl_semun \
+          -Ud_csh \
+          -Dusenm=false \
+          -Dcf_email=buildkit@buildkitsandbox \
+          -Dmydomain=buildkitsandbox
+    build:
+      - |
+        make -j $(nproc)
+    install:
+      - |
+        make DESTDIR=/rootfs install.perl
+finalize:
+  - from: /rootfs
+    to: /

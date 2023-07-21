@@ -1,0 +1,33 @@
+name: git
+dependencies:
+  - stage: base
+  - stage: zlib
+    runtime: true
+  - stage: tcl
+  - stage: gettext
+  - stage: openssl
+  - stage: curl
+    runtime: true
+  - stage: autoconf
+steps:
+  - sources:
+      - url: https://mirrors.edge.kernel.org/pub/software/scm/git/git-{{ .git_version }}.tar.xz
+        destination: git.tar.xz
+        sha256: "{{ .git_sha256 }}"
+        sha512: "{{ .git_sha512 }}"
+    prepare:
+      - |
+        tar -xJf git.tar.xz --strip-components=1
+        make configure
+        ./configure \
+            --prefix=${TOOLCHAIN} \
+            --with-zlib=${TOOLCHAIN}
+    build:
+      - |
+        make -j $(nproc)
+    install:
+      - |
+        make DESTDIR=/rootfs install
+finalize:
+  - from: /rootfs
+    to: /

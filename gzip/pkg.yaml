@@ -1,0 +1,27 @@
+name: gzip
+dependencies:
+  - stage: base
+steps:
+  - sources:
+      - url: https://ftp.gnu.org/gnu/gzip/gzip-{{ .gzip_version }}.tar.xz
+        destination: gzip.tar.xz
+        sha256: "{{ .gzip_sha256 }}"
+        sha512: "{{ .gzip_sha512 }}"
+    prepare:
+      - |
+        tar -xJf gzip.tar.xz --strip-components=1
+        mkdir build
+        cd build
+        ../configure \
+            --prefix=${TOOLCHAIN}
+    build:
+      - |
+        cd build
+        make -j $(nproc)
+    install:
+      - |
+        cd build
+        make DESTDIR=/rootfs install
+finalize:
+  - from: /rootfs
+    to: /

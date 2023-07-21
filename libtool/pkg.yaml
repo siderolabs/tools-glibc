@@ -1,0 +1,30 @@
+name: libtool
+dependencies:
+  - stage: base
+  - stage: m4
+    runtime: true
+steps:
+  - sources:
+      - url: http://ftpmirror.gnu.org/libtool/libtool-{{ .libtool_version }}.tar.gz
+        destination: libtool.tar.gz
+        sha256: "{{ .libtool_sha256 }}"
+        sha512: "{{ .libtool_sha512 }}"
+    prepare:
+      - |
+        tar -xzf libtool.tar.gz --strip-components=1
+        mkdir build
+        cd build
+
+        ../configure \
+            --prefix=${TOOLCHAIN}
+    build:
+      - |
+        cd build
+        make -j $(nproc)
+    install:
+      - |
+        cd build
+        make DESTDIR=/rootfs install
+finalize:
+  - from: /rootfs
+    to: /

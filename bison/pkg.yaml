@@ -1,0 +1,31 @@
+name: bison
+dependencies:
+  - stage: base
+  - stage: m4
+  - stage: perl
+steps:
+  - sources:
+      - url: https://ftp.gnu.org/gnu/bison/bison-{{ .bison_version }}.tar.xz
+        destination: bison.tar.xz
+        sha256: "{{ .bison_sha256 }}"
+        sha512: "{{ .bison_sha512 }}"
+    prepare:
+      - |
+        tar -xJf bison.tar.xz --strip-components=1
+        mkdir build
+        cd build
+
+        ../configure \
+            --prefix=${TOOLCHAIN} \
+            FORCE_UNSAFE_CONFIGURE=1
+    build:
+      - |
+        cd build
+        make -j $(nproc)
+    install:
+      - |
+        cd build
+        make DESTDIR=/rootfs install
+finalize:
+  - from: /rootfs
+    to: /

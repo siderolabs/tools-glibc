@@ -1,0 +1,31 @@
+name: flex
+dependencies:
+  - stage: base
+  - stage: m4
+steps:
+  - sources:
+      - url: https://github.com/westes/flex/releases/download/v{{ .flex_version }}/flex-{{ .flex_version }}.tar.gz
+        destination: flex.tar.gz
+        sha256: "{{ .flex_sha256 }}"
+        sha512: "{{ .flex_sha512 }}"
+    prepare:
+      - |
+        tar -xzf flex.tar.gz --strip-components=1
+        mkdir build
+        cd build
+
+        sed -i "/math.h/a #include <malloc.h>" ../src/flexdef.h
+
+        ../configure \
+            --prefix=${TOOLCHAIN}
+    build:
+      - |
+        cd build
+        make -j $(nproc)
+    install:
+      - |
+        cd build
+        make DESTDIR=/rootfs install
+finalize:
+  - from: /rootfs
+    to: /

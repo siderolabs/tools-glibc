@@ -1,0 +1,27 @@
+name: patch
+dependencies:
+  - stage: base
+steps:
+  - sources:
+      - url: https://ftp.gnu.org/gnu/patch/patch-{{ .patch_version }}.tar.xz
+        destination: patch.tar.xz
+        sha256: "{{ .patch_sha256 }}"
+        sha512: "{{ .patch_sha512 }}"
+    prepare:
+      - |
+        tar -xJf patch.tar.xz --strip-components=1
+        mkdir build
+        cd build
+        ../configure \
+            --prefix=${TOOLCHAIN}
+    build:
+      - |
+        cd build
+        make -j $(nproc)
+    install:
+      - |
+        cd build
+        make DESTDIR=/rootfs install
+finalize:
+  - from: /rootfs
+    to: /

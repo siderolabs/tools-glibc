@@ -1,0 +1,27 @@
+name: sed
+dependencies:
+  - stage: base
+steps:
+  - sources:
+      - url: https://ftp.gnu.org/gnu/sed/sed-{{ .sed_version }}.tar.xz
+        destination: sed.tar.xz
+        sha256: "{{ .sed_sha256 }}"
+        sha512: "{{ .sed_sha512 }}"
+    prepare:
+      - |
+        tar -xJf sed.tar.xz --strip-components=1
+        mkdir build
+        cd build
+        ../configure \
+            --prefix=${TOOLCHAIN}
+    build:
+      - |
+        cd build
+        make -j $(nproc)
+    install:
+      - |
+        cd build
+        make DESTDIR=/rootfs install
+finalize:
+  - from: /rootfs
+    to: /

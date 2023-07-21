@@ -1,0 +1,64 @@
+name: tools
+variant: scratch
+shell: /toolchain/bin/bash
+dependencies:
+  - image: '{{ .TOOLCHAIN_IMAGE }}'
+  - stage: argp-standalone
+  - stage: autoconf
+  - stage: automake
+  - stage: bash
+  - stage: bison
+  - stage: bzip2
+  - stage: ca-certificates
+  - stage: cmake
+  - stage: coreutils
+  - stage: curl
+  - stage: diffutils
+  - stage: elfutils
+  - stage: expat
+  - stage: expect
+  - stage: file
+  - stage: findutils
+  - stage: flex
+  - stage: gawk
+  - stage: gettext
+  - stage: git
+  - stage: golang
+  - stage: gperf
+  - stage: grep
+  - stage: groff
+  - stage: gzip
+  - stage: kmod
+  - stage: libcap
+  - stage: libffi
+  - stage: libtool
+  - stage: libunistring
+  - stage: libuv
+  - stage: m4
+  - stage: make
+  - stage: meson
+  - stage: ncurses
+  - stage: nettle
+  - stage: openssl
+  - stage: patch
+  - stage: pcre
+  - stage: perl
+  - stage: pkg-config
+  - stage: python3
+  - stage: rhash
+  - stage: rpcsvc-proto
+  - stage: sed
+  - stage: tar
+  - stage: tcl
+  - stage: texinfo
+  - stage: util-linux
+  - stage: xz
+  - stage: zlib
+  - stage: zstd
+steps:
+  - prepare:
+      - |
+        cp /pkg/files/adjust.sh ${TOOLCHAIN}/bin
+finalize:
+  - from: /toolchain
+    to: /toolchain
